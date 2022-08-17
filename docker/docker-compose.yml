@@ -1,24 +1,33 @@
-version: "2.3"
+version: "3.9"
 
 services:
-  jupyterlab-server:
+  pytorch-server:
     build:
       args:
-        - username=${USER}
-        - uid=${UID}
-        - gid=${GID}
+        - username=${USERN}
+        - uidr=${UID}
+        - gidr=${GID}
+        - rtpass=${ROOTPASS}
       context: ../
       dockerfile: docker/Dockerfile
+    image: pytorch_jupyter:v1
+    container_name: pytorch-jupyter
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu]
     ports:
       - "8888:8888"
-    runtime: nvidia
     volumes:
-      - ../bin:/home/${USER}/app/bin
-      - ../data:/home/${USER}/app/data
-      - ../doc:/home/${USER}/app/doc
-      - ../notebooks:/home/${USER}/app/notebooks
-      - ../results:/home/${USER}/app/results
-      - ../src:/home/${USER}/app/src
+      - ../bin:/workspace/bin
+      - ../data:/workspace/data
+      - ../doc:/workspace/doc
+      - ../notebooks:/workspace/notebooks
+      - ../results:/workspace/results
+      - ../src:/workspace/src
     init: true
     stdin_open: true
-    tty: true    
+    tty: true

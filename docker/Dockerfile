@@ -1,71 +1,38 @@
-FROM ubuntu:18.04
+# syntax=docker/dockerfile:1
 
-LABEL maintainer="pughdr <david.pugh@kaust.edu.sa>"
+FROM nvcr.io/nvidia/pytorch:22.07-py3
 
-SHELL [ "/bin/bash", "--login", "-c" ]
+LABEL maintainer="Prabhakar Srivastav <prk327@gmail.com>"
 
-RUN apt-get update --fix-missing && \
-    apt-get install -y wget bzip2 curl git && \
+# -- Layer: Image Metadata
+
+LABEL org.label-schema.name="Data Science Standalone Cluster on Docker - Cluster Base Image"
+LABEL org.label-schema.description="Cluster base image shipped with Python , jupyter lab and pytorch"
+LABEL org.label-schema.url="https://github.com/prk327/pytorch-gpu-mlproject.git"
+LABEL org.label-schema.schema-version="1.0"
+
+RUN apt update && apt install --only-upgrade linux-libc-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# create a password for root
+RUN echo 'root:${rtpass}' | chpasswd
+
 # Create a non-root user
-ARG username=al-khawarizmi
-ARG uid=1000
-ARG gid=100
-ENV USER $username
-ENV UID $uid
-ENV GID $gid
-ENV HOME /home/$USER
+ARG username
+ARG uidr
+ARG gidr
+ENV HOMEN /home/${username}
 
 RUN adduser --disabled-password \
     --gecos "Non-root user" \
-    --uid $UID \
-    --gid $GID \
-    --home $HOME \
-    $USER
+    --uid ${uidr} \
+    --gid ${gidr} \
+    --home $HOMEN \
+    $username
 
-COPY environment.yml requirements.txt /tmp/
-RUN chown $UID:$GID /tmp/environment.yml /tmp/requirements.txt
-
-COPY postBuild docker/entrypoint.sh /usr/local/bin/
-RUN chown $UID:$GID /usr/local/bin/postBuild /usr/local/bin/entrypoint.sh && \
-    chmod u+x /usr/local/bin/postBuild /usr/local/bin/entrypoint.sh
-
-USER $USER
-
-# install miniconda
-ENV MINICONDA_VERSION 4.8.2
-ENV CONDA_DIR $HOME/miniconda3
-RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-$MINICONDA_VERSION-Linux-x86_64.sh -O ~/miniconda.sh && \
-    chmod +x ~/miniconda.sh && \
-    ~/miniconda.sh -b -p $CONDA_DIR && \
-    rm ~/miniconda.sh
-
-# make non-activate conda commands available
-ENV PATH=$CONDA_DIR/bin:$PATH
-
-# make conda activate command available from /bin/bash --login shells
-RUN echo ". $CONDA_DIR/etc/profile.d/conda.sh" >> ~/.profile
-
-# make conda activate command available from /bin/bash --interative shells
-RUN conda init bash
-
-# create a project directory inside user home
-ENV PROJECT_DIR $HOME/app
-RUN mkdir $PROJECT_DIR
-WORKDIR $PROJECT_DIR
-
-# build the conda environment
-ENV ENV_PREFIX $PROJECT_DIR/env
-RUN conda update --name base --channel defaults conda && \
-    conda env create --prefix $ENV_PREFIX --file /tmp/environment.yml --force && \
-    conda activate $ENV_PREFIX && \
-    . /usr/local/bin/postBuild && \
-    conda clean --all --yes
-
-# use an entrypoint script to insure conda environment is properly activated at runtime
-ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
+# running the below code as non root user
+USER ${username}
 
 # default command will be to launch JupyterLab server for development
 CMD [ "jupyter", "lab", "--no-browser", "--ip", "0.0.0.0" ]
