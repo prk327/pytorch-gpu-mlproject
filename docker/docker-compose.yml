@@ -4,17 +4,21 @@ services:
   pytorch-server:
     build:
       args:
-        - username=${USERN}
-        - uidr=${UID}
-        - gidr=${GID}
-        - rtpass=${ROOTPASS}
+        - username=${USERN?err}
+        - uidr=${UID?err}
+        - gidr=${GID?err}
       context: ../
       dockerfile: docker/Dockerfile
     image: pytorch_jupyter:v1
-    container_name: pytorch-jupyter
+    container_name: pytorch-Jupyter
     deploy:
       resources:
+        limits:
+          cpus: "0.50"
+          memory: 2g
         reservations:
+          cpus: "0.25"
+          memory: 1g
           devices:
           - driver: nvidia
             count: all
@@ -31,3 +35,7 @@ services:
     init: true
     stdin_open: true
     tty: true
+    shm_size: 2g
+    ulimits:
+      memlock: -1
+      stack: 67108864

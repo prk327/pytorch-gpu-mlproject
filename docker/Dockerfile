@@ -16,7 +16,7 @@ RUN apt update && apt install --only-upgrade linux-libc-dev && \
     rm -rf /var/lib/apt/lists/*
 
 # create a password for root
-RUN echo 'root:${rtpass}' | chpasswd
+RUN echo 'root:Docker!' | chpasswd
 
 # Create a non-root user
 ARG username

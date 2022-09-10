@@ -136,3 +136,8 @@ dcgm/
 
 # ignore vscode settings
 .vscode/
+
+# ignore sample data
+data/
+notebooks/data/
+notebooks/.Trash-1001/
